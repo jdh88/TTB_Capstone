@@ -189,7 +189,7 @@ class TTB_Scraper(object):
             if r.status_code == 200:
                 imgs.append(Image.open(io.BytesIO(r.content)))
 
-        return imgs
+        return img_meta, imgs
 
 
 def main():
