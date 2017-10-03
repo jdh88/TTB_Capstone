@@ -8,6 +8,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+from PIL import Image
+import io
+
 from collections import deque
 
 __author__ = "Jonathan Hirokawa"
@@ -172,6 +175,22 @@ class TTB_Scraper(object):
                     for chunk in r:
                         f.write(chunk)
 
+    def get_images(self):
+        """Returns a list of PIL array images"""
+
+        img_meta = self.publicFormBasic_scraping()  # also updates cookie JSESSIONID (needed for downloading imgs)
+        imgs = []
+
+        # attempt to download each image
+        for name, url in img_meta:
+            r = self.session.get(url)
+
+            # check status of request
+            if r.status_code == 200:
+                imgs.append(Image.open(io.BytesIO(r.content)))
+
+        return imgs
+
 
 def main():
     """ Main entry point of the app """
@@ -179,7 +198,8 @@ def main():
     #scraper = TTB_Scraper(17115001000140)  # funky buddah
     scraper = TTB_Scraper(16306001000152)  # blue moon, mango wheat
     data = scraper.get_basic_form_data()
-    scraper.download_images()
+    #scraper.download_images()
+    imgs = scraper.get_images()
     print(data)
 
 
