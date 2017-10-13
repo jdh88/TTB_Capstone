@@ -6,11 +6,14 @@ TTB Webscraping
 import datetime
 import warnings
 from time import sleep
+import logging
 
-
+import re
 import pymongo
+import pandas as pd
 
 from TTB_scraping import TTB_Scraper
+from Image_Processing import CalcImgMetrics
 
 __author__ = "Jonathan Hirokawa"
 __version__ = "0.1.0"
@@ -96,11 +99,70 @@ def sequential(start_date, stop_date, skip_tol=3):
     f.close()
 
 
+def image_scrape(ttbid_list):
+    logging.basicConfig(filename='Img_Scrape {}.log'.format(datetime.datetime.now()), level=logging.DEBUG)
+
+    # Set up connection to mongodb
+    client = pymongo.MongoClient()  # Connect to default client
+    db = client.TTB  # Get a database (note: lazy evaluation)
+
+    COLORS = db.COLORS  # the actual collection
+    IMG_META = db.IMG_META
+    IMG_SUP = db.IMG_SUP
+
+    for curr_id in ttbid_list:
+        query = TTB_Scraper(curr_id)
+        [meta, imgs] = query.get_images()
+
+        for im_num, (metadata, img) in enumerate(zip(meta, imgs)):
+
+            # calculate our image metrics
+            metrics = CalcImgMetrics(img)
+            df_color, sum_entropy = metrics.calc_all_metrics()
+
+            # convert things into pandas tables since its easier than futzing with dicts
+            # add the ttbid id and some additional meta information so we can join tables better in the future
+            n_rows = df_color.shape[0]
+            df_color['TTBID'] = [str(curr_id)] * n_rows # add column with ttbid
+            df_color['img_num'] = [str(im_num)] * n_rows
+
+            df_img_meta = pd.DataFrame()
+            df_img_meta['LabelName'] = [re.sub('Label Image: ', '', metadata[0])]
+            df_img_meta['URL'] = [metadata[1]]
+            df_img_meta['TTBID'] = [str(curr_id)] * df_img_meta.shape[0]
+            df_img_meta['ImgType'] = [metrics.img_format]
+
+            df_sup = pd.DataFrame()
+            df_sup['TTBID'] = [str(curr_id)]
+            df_sup['EntropySum'] = [sum_entropy]
+
+            # COLOR collection
+            try:
+                COLORS.insert_many(df_color.to_dict('records'))
+                logging.info('Successfully added data to COLORS. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
+            except pymongo.errors.DuplicateKeyError:
+                logging.warning('Failed to add data to COLORS. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
+
+            # IMG_META collection
+            try:
+                IMG_META.insert_many(df_img_meta.to_dict('records'))
+                logging.info('Successfully added data to IMG_META. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
+            except pymongo.errors.DuplicateKeyError:
+                logging.warning('Failed to add data to IMG_META. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
+
+            # IMG_SUP collection
+            try:
+                IMG_SUP.insert_many(df_sup.to_dict('records'))
+                logging.info('Successfully added data to IMG_SUP. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
+            except pymongo.errors.DuplicateKeyError:
+                logging.warning('Failed to add data to IMG_SUP. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
+
 
 def main():
     """ Main entry point of the app """
 
-    sequential('01/01/2016', '01/02/2016')
+    #sequential('01/01/2016', '01/02/2016')  # main form data
+    image_scrape([16306001000152])
 
 if __name__ == "__main__":
     """ This is executed when run from the command line """
