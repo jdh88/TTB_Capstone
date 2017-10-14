@@ -12,6 +12,8 @@ import re
 import pymongo
 import pandas as pd
 
+from tqdm import tqdm
+
 from TTB_scraping import TTB_Scraper
 from Image_Processing import CalcImgMetrics
 
@@ -112,7 +114,7 @@ def image_scrape(ttbid_list):
     IMG_META = db.IMG_META
     IMG_SUP = db.IMG_SUP
 
-    for curr_id in ttbid_list:
+    for curr_id in tqdm(ttbid_list):
         query = TTB_Scraper(curr_id)
         [meta, imgs] = query.get_images()
 
