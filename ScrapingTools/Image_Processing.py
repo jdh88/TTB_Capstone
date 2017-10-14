@@ -109,6 +109,13 @@ class CalcImgMetrics(object):
         for n_colors in range(2, max_colors):
             clt = cluster.KMeans(n_clusters=n_colors, random_state=rand_state, n_init=n_init)
             clt.fit(image_array_sample)
+
+            # if single color
+            if len(np.unique(clt.labels_)) == 1:
+                clusters = clt.fit(image_array_sample)
+                hist = self.centroid_histogram(clusters)
+                return hist, [clusters.cluster_centers_[0]]
+
             silhouette = silhouette_score(image_array_sample, clt.labels_, metric='euclidean')
 
             # Find the best one
@@ -180,10 +187,12 @@ class CalcImgMetrics(object):
 def main():
     """ Main entry point of the app """
 
-    scraper = TTB_Scraper(16306001000152)  # blue moon, mango wheat
+    #scraper = TTB_Scraper(16306001000152)  # blue moon, mango wheat
+    scraper = TTB_Scraper(16001001000052)  # blue moon, mango wheat
+
     meta, imgs = scraper.get_images()
     print(meta)
-    metric_calculator = CalcImgMetrics(imgs[0])
+    metric_calculator = CalcImgMetrics(imgs[1])
     colors, entropy = metric_calculator.calc_all_metrics()
     print(colors)
     print(entropy)
