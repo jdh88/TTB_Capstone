@@ -100,7 +100,9 @@ def sequential(start_date, stop_date, skip_tol=3):
 
 
 def image_scrape(ttbid_list):
-    logging.basicConfig(filename='Img_Scrape {}.log'.format(datetime.datetime.now()), level=logging.DEBUG)
+    logging.basicConfig(filename='Img_Scrape {}.log'.format(datetime.datetime.now()), level=logging.ERROR)
+    logger = logging.getLogger(__name__)  # having set the logging level to error for all modules
+    logger.setLevel(logging.DEBUG)  # we now set the logging level to debug for our module
 
     # Set up connection to mongodb
     client = pymongo.MongoClient()  # Connect to default client
@@ -139,23 +141,23 @@ def image_scrape(ttbid_list):
             # COLOR collection
             try:
                 COLORS.insert_many(df_color.to_dict('records'))
-                logging.info('Successfully added data to COLORS. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
+                logger.info('Successfully added data to COLORS. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
             except pymongo.errors.DuplicateKeyError:
-                logging.warning('Failed to add data to COLORS. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
+                logger.warning('Failed to add data to COLORS. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
 
             # IMG_META collection
             try:
                 IMG_META.insert_many(df_img_meta.to_dict('records'))
-                logging.info('Successfully added data to IMG_META. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
+                logger.info('Successfully added data to IMG_META. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
             except pymongo.errors.DuplicateKeyError:
-                logging.warning('Failed to add data to IMG_META. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
+                logger.warning('Failed to add data to IMG_META. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
 
             # IMG_SUP collection
             try:
                 IMG_SUP.insert_many(df_sup.to_dict('records'))
-                logging.info('Successfully added data to IMG_SUP. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
+                logger.info('Successfully added data to IMG_SUP. TTBID: {ttbid} IMG: {im_num}'.format(ttbid=curr_id, im_num=im_num))
             except pymongo.errors.DuplicateKeyError:
-                logging.warning('Failed to add data to IMG_SUP. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
+                logger.warning('Failed to add data to IMG_SUP. TTBID: {ttbid} IMG: {im_num} already present'.format(ttbid=curr_id, im_num=im_num))
 
 
 def main():
