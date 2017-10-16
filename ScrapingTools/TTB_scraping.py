@@ -187,7 +187,10 @@ class TTB_Scraper(object):
 
             # check status of request
             if r.status_code == 200:
-                imgs.append(Image.open(io.BytesIO(r.content)))
+                try:
+                    imgs.append(Image.open(io.BytesIO(r.content)))
+                except OSError:
+                    return img_meta, []
 
         return img_meta, imgs
 
@@ -196,7 +199,9 @@ def main():
     """ Main entry point of the app """
 
     #scraper = TTB_Scraper(17115001000140)  # funky buddah
-    scraper = TTB_Scraper(16306001000152)  # blue moon, mango wheat
+    #scraper = TTB_Scraper(16306001000152)  # blue moon, mango wheat
+    scraper = TTB_Scraper(16137001000448)  # missing picture
+
     data = scraper.get_basic_form_data()
     #scraper.download_images()
     imgs = scraper.get_images()
