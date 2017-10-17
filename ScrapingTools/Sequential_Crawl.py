@@ -100,7 +100,7 @@ def sequential(start_date, stop_date, skip_tol=3):
                     else:
                         cont_seq = False
                     #f.write('{},0\n'.format(ttbid))
-                    logger.info('Sequence terminated, last try was with:  {ttbid}'.format(ttbid=ttbid))
+                    logger.info('No data found for:  {ttbid}'.format(ttbid=ttbid))
 
                 sleep(0.1)
             curr_reccode += 1
