@@ -31,7 +31,12 @@ def sequential(start_date, stop_date, skip_tol=3):
     :param skip_tol:  how many skips to tolerate before moving to the next date
     :return:
     """
-    f = open('logfile_{start}-{stop}.txt'.format(start=start_date, stop=stop_date), 'w')
+    #f = open('logfile_{start}-{stop}.txt'.format(start=start_date, stop=stop_date), 'w')
+
+    logging.basicConfig(filename='Form_Scrape {}.log'.format(datetime.datetime.now()), level=logging.ERROR)
+    logger = logging.getLogger(__name__)  # having set the logging level to error for all modules
+    logger.setLevel(logging.DEBUG)  # we now set the logging level to debug for our module
+
 
     # Set up connection to mongodb
     client = pymongo.MongoClient()  # Connect to default client
@@ -82,9 +87,11 @@ def sequential(start_date, stop_date, skip_tol=3):
                     try:
                         TTB.insert_one(output)
                         # print('Successfully added: {}'.format(ttbid))
-                        f.write('{},1\n'.format(ttbid))
+                        #f.write('{},1\n'.format(ttbid))
+                        logger.info('Successfully added:  {ttbid}'.format(ttbid=ttbid))
                     except pymongo.errors.DuplicateKeyError:
-                        warnings.warn('_id: {ttbid} is already in database, skipping...'.format(ttbid=ttbid))
+                        #warnings.warn('_id: {ttbid} is already in database, skipping...'.format(ttbid=ttbid))
+                        logger.warning('TTBID already in database, skipping:  {ttbid}'.format(ttbid=ttbid))
                 else:
                     # stick with this sequence
                     if retry_count < skip_tol:
@@ -92,13 +99,14 @@ def sequential(start_date, stop_date, skip_tol=3):
                         retry_count += 1
                     else:
                         cont_seq = False
-                    f.write('{},0\n'.format(ttbid))
+                    #f.write('{},0\n'.format(ttbid))
+                    logger.info('Sequence terminated, last try was with:  {ttbid}'.format(ttbid=ttbid))
 
                 sleep(0.1)
             curr_reccode += 1
         curr_date += datetime.timedelta(days=1)
 
-    f.close()
+    #f.close()
 
 
 def image_scrape(ttbid_list):
@@ -165,6 +173,8 @@ def image_scrape(ttbid_list):
 
         else:
             logger.warning('Skipping {ttbid}, unable to access images'.format(ttbid=curr_id))
+
+
 def main():
     """ Main entry point of the app """
 
